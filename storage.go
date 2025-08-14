@@ -2,16 +2,7 @@ package fsm
 
 import (
 	"sync"
-	"time"
 )
-
-// MediaData stores information about a specific media group.
-// FileIDs    – a list of file identifiers belonging to this group.
-// LastUpdate – the timestamp of the last modification to this group.
-type MediaData struct {
-	FileIDs    []string
-	LastUpdate time.Time
-}
 
 // cacheData holds a concurrent map for user-specific cached data.
 type cacheData struct {
@@ -36,7 +27,7 @@ func (f *FSM) Get(userID int64, key string) (any, bool) {
 
 // SetMedia adds a fileID to the specified mediaGroupID for a given user.
 // Creates nested structures in localStorage if they don't exist yet.
-func (f *FSM) SetMedia(userID int64, mediaGroupID, fileID string) {
+func (f *FSM) SetMedia(userID int64, mediaGroupID string, file File) {
 	userVal, _ := f.localStorage.LoadOrStore(userID, &cacheData{})
 	userCache := userVal.(*cacheData)
 
@@ -48,8 +39,8 @@ func (f *FSM) SetMedia(userID int64, mediaGroupID, fileID string) {
 
 	val, _ := mediaCache.data.LoadOrStore(mediaGroupID, &MediaData{})
 	md := val.(*MediaData)
-	md.FileIDs = append(md.FileIDs, fileID)
-	md.LastUpdate = time.Now()
+	md.addFile(file)
+	md.touch()
 	// mediaCache.data.Store(mediaGroupID, md) // не обязательно, md — тот же указатель
 }
 
@@ -73,6 +64,31 @@ func (f *FSM) GetMedia(userID int64, mediaGroupID string) (*MediaData, bool) {
 		return nil, false
 	}
 	return val.(*MediaData), true
+}
+
+func (f *FSM) CleanMediaCache(userID int64, mediaGroupID string) bool {
+	userVal, ok := f.localStorage.Load(userID)
+	if !ok {
+		return false
+	}
+	userCache := userVal.(*cacheData)
+
+	mediaVal, ok := userCache.data.Load("media")
+	if !ok {
+		return false
+	}
+	mediaCache := mediaVal.(*cacheData)
+
+	mediaCache.mu.Lock()
+	defer mediaCache.mu.Unlock()
+
+	_, ok = mediaCache.data.Load(mediaGroupID)
+	if !ok {
+		return false
+	}
+
+	mediaCache.data.Delete(mediaGroupID)
+	return true
 }
 
 // CleanCache removes all cached data for the given user.
