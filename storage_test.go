@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	fsm "github.com/whynot00/go-telegram-fsm"
+	"github.com/whynot00/go-telegram-fsm/media"
 )
 
 func TestSetAndGet(t *testing.T) {
@@ -45,9 +46,9 @@ func TestGetMedia_Empty(t *testing.T) {
 func TestIsolation_UserAndGroup(t *testing.T) {
 	f := fsm.New(context.Background())
 
-	f.SetMedia(1, "A", fsm.File{FileID: "x1"})
-	f.SetMedia(1, "B", fsm.File{FileID: "x2"})
-	f.SetMedia(2, "A", fsm.File{FileID: "y1"})
+	f.SetMedia(1, "A", media.File{FileID: "x1"})
+	f.SetMedia(1, "B", media.File{FileID: "x2"})
+	f.SetMedia(2, "A", media.File{FileID: "y1"})
 
 	md1A, ok := f.GetMedia(1, "A")
 	require.True(t, ok)
@@ -81,7 +82,7 @@ func TestLastUpdate_ResetOnSet(t *testing.T) {
 	f := fsm.New(context.Background())
 	uid, gid := int64(42), "g"
 
-	f.SetMedia(uid, gid, fsm.File{FileID: "a"})
+	f.SetMedia(uid, gid, media.File{FileID: "a"})
 	md1, ok := f.GetMedia(uid, gid)
 	require.True(t, ok)
 
@@ -89,7 +90,7 @@ func TestLastUpdate_ResetOnSet(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 	require.True(t, md1.Elapsed(d), "elapsed should be true after waiting")
 
-	f.SetMedia(uid, gid, fsm.File{FileID: "b"})
+	f.SetMedia(uid, gid, media.File{FileID: "b"})
 	md2, ok := f.GetMedia(uid, gid)
 	require.True(t, ok)
 	require.Same(t, md1, md2)
@@ -109,7 +110,7 @@ func TestConcurrentAppend(t *testing.T) {
 		i := i
 		go func() {
 			defer wg.Done()
-			f.SetMedia(uid, gid, fsm.File{FileID: fmt.Sprintf("id-%d", i)})
+			f.SetMedia(uid, gid, media.File{FileID: fmt.Sprintf("id-%d", i)})
 		}()
 	}
 	wg.Wait()
@@ -135,11 +136,11 @@ func TestPointerSemantics_NoExtraStoreNeeded(t *testing.T) {
 	f := fsm.New(context.Background())
 	uid, gid := int64(10), "g"
 
-	f.SetMedia(uid, gid, fsm.File{FileID: "x"})
+	f.SetMedia(uid, gid, media.File{FileID: "x"})
 	md1, ok := f.GetMedia(uid, gid)
 	require.True(t, ok)
 
-	f.SetMedia(uid, gid, fsm.File{FileID: "y"})
+	f.SetMedia(uid, gid, media.File{FileID: "y"})
 
 	md2, ok := f.GetMedia(uid, gid)
 	require.True(t, ok)
@@ -156,7 +157,7 @@ func TestCleanCache(t *testing.T) {
 	userID := int64(555)
 
 	f.Set(userID, "key", "val")
-	f.SetMedia(userID, "md_gr_1", fsm.File{FileID: "asd"})
+	f.SetMedia(userID, "md_gr_1", media.File{FileID: "asd"})
 
 	val, ok := f.Get(userID, "key")
 	require.True(t, ok)
@@ -168,7 +169,7 @@ func TestCleanCache(t *testing.T) {
 	require.False(t, ok)
 }
 
-func fileIDs(files []fsm.File) []string {
+func fileIDs(files []media.File) []string {
 	out := make([]string, len(files))
 	for i, f := range files {
 		out[i] = f.FileID
