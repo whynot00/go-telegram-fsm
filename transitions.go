@@ -23,10 +23,12 @@ func (f *FSM) Finish(userID int64) {
 // CurrentState returns the current FSM state for the user.
 // If no state exists, it initializes and returns StateDefault.
 func (f *FSM) CurrentState(userID int64) StateFSM {
-	act, _ := f.current.LoadOrStore(userID, stateData{
+	actRaw, _ := f.current.LoadOrStore(userID, stateData{
 		state:   StateDefault,
 		lastUse: time.Now(),
 	})
+	act := actRaw.(stateData)
+	act.lastUse = time.Now()
 
-	return act.(stateData).state
+	return act.state
 }

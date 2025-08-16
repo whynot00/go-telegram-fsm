@@ -12,6 +12,9 @@ import (
 type FSM struct {
 	current sync.Map        // current state and last usage time keyed by user ID.
 	storage storage.Storage // pluggable storage backend.
+
+	ttl             time.Duration
+	cleanupInterval time.Duration
 }
 
 // stateData holds the FSM state and the timestamp of last update.
@@ -27,6 +30,9 @@ func New(ctx context.Context, opts ...Option) *FSM {
 	fsm := &FSM{
 		current: sync.Map{},
 		storage: NewMemoryStorage(),
+
+		ttl:             30 * time.Minute,
+		cleanupInterval: 30 * time.Second,
 	}
 
 	for _, opt := range opts {
@@ -34,7 +40,7 @@ func New(ctx context.Context, opts ...Option) *FSM {
 	}
 
 	// Start a goroutine for periodic cleanup of inactive states
-	go fsm.startCleanupWorker(ctx, 30*time.Minute)
+	go fsm.startCleanupWorker(ctx)
 
 	return fsm
 }

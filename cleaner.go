@@ -8,14 +8,14 @@ import (
 // startCleanupWorker runs a background goroutine that periodically
 // calls cleanup to remove expired states based on the given TTL.
 // It stops when the context is canceled.
-func (f *FSM) startCleanupWorker(ctx context.Context, ttl time.Duration) {
-	ticker := time.NewTicker(30 * time.Second)
+func (f *FSM) startCleanupWorker(ctx context.Context) {
+	ticker := time.NewTicker(f.cleanupInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			f.cleanup(ttl)
+			f.cleanup(f.ttl)
 		case <-ctx.Done():
 			return
 		}
