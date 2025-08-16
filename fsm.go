@@ -8,8 +8,8 @@ import (
 
 // FSM implements a finite state machine for users, maintaining states and local cache.
 type FSM struct {
-	current      sync.Map // map[userID]stateData holding current state and last usage time
-	localStorage sync.Map // map[userID]cacheData storing user-specific cached data
+	current sync.Map // current state and last usage time keyed by user ID.
+	storage Storage  // pluggable storage backend.
 }
 
 // stateData holds the FSM state and the timestamp of last update.
@@ -20,10 +20,15 @@ type stateData struct {
 
 // New creates a new FSM instance and starts a background worker
 // to periodically clean up expired states.
-func New(ctx context.Context) *FSM {
+// Storage backend can be customised via options.
+func New(ctx context.Context, opts ...Option) *FSM {
 	fsm := &FSM{
-		current:      sync.Map{},
-		localStorage: sync.Map{},
+		current: sync.Map{},
+		storage: NewMemoryStorage(),
+	}
+
+	for _, opt := range opts {
+		opt(fsm)
 	}
 
 	// Start a goroutine for periodic cleanup of inactive states
