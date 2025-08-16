@@ -5,11 +5,11 @@ import (
 )
 
 // ctxKey defines a custom type for context keys to avoid collisions.
-type ctxKey string
+type ctxKey int
 
 const (
 	// FsmKey is the key used to store/retrieve FSM instance in context.
-	FsmKey ctxKey = "fsm"
+	FsmKey ctxKey = iota
 )
 
 // WithContext returns a new context with the FSM instance stored.
