@@ -1,22 +1,18 @@
-package fsm
+package media
 
-import (
-	"time"
-
-	"github.com/whynot00/go-telegram-fsm/media"
-)
+import "time"
 
 // MediaData stores information about a specific media group.
 // FileIDs    – a list of file identifiers belonging to this group.
 // LastUpdate – the timestamp of the last modification to this group.
 type MediaData struct {
-	files      []media.File
+	files      []File
 	lastUpdate time.Time
 }
 
 // Files returns a copy of the stored files to preserve encapsulation.
-func (md *MediaData) Files() []media.File {
-	out := make([]media.File, len(md.files))
+func (md *MediaData) Files() []File {
+	out := make([]File, len(md.files))
 	copy(out, md.files)
 	return out
 }
@@ -27,11 +23,11 @@ func (md *MediaData) Elapsed(t time.Duration) bool {
 }
 
 // touch updates lastUpdate to the current time.
-func (md *MediaData) touch() {
+func (md *MediaData) Touch() {
 	md.lastUpdate = time.Now()
 }
 
 // addFile appends a file to the internal list without updating lastUpdate.
-func (md *MediaData) addFile(file media.File) {
+func (md *MediaData) AddFile(file File) {
 	md.files = append(md.files, file)
 }

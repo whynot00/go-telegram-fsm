@@ -18,7 +18,7 @@ func (f *FSM) SetMedia(userID int64, mediaGroupID string, file media.File) {
 }
 
 // GetMedia returns media data for the specified media group.
-func (f *FSM) GetMedia(userID int64, mediaGroupID string) (*MediaData, bool) {
+func (f *FSM) GetMedia(userID int64, mediaGroupID string) (*media.MediaData, bool) {
 	return f.storage.GetMedia(userID, mediaGroupID)
 }
 

@@ -4,12 +4,14 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/whynot00/go-telegram-fsm/storage"
 )
 
 // FSM implements a finite state machine for users, maintaining states and local cache.
 type FSM struct {
-	current sync.Map // current state and last usage time keyed by user ID.
-	storage Storage  // pluggable storage backend.
+	current sync.Map        // current state and last usage time keyed by user ID.
+	storage storage.Storage // pluggable storage backend.
 }
 
 // stateData holds the FSM state and the timestamp of last update.

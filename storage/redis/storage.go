@@ -1,6 +1,4 @@
-//go:build redis
-
-package fsm
+package redis
 
 import (
 	"bytes"
@@ -12,6 +10,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/whynot00/go-telegram-fsm/media"
+	"github.com/whynot00/go-telegram-fsm/storage"
 )
 
 // RedisStorage implements Storage backed by Redis.
@@ -20,7 +19,7 @@ type RedisStorage struct {
 }
 
 // NewRedisStorage creates a RedisStorage instance.
-func NewRedisStorage(addr, username, password string, db int) Storage {
+func NewRedisStorage(addr, username, password string, db int) storage.Storage {
 	opts := &redis.Options{Addr: addr, Username: username, Password: password, DB: db}
 	return &RedisStorage{client: redis.NewClient(opts)}
 }
@@ -81,7 +80,7 @@ func (r *RedisStorage) SetMedia(userID int64, mediaGroupID string, file media.Fi
 }
 
 // GetMedia retrieves media data from Redis.
-func (r *RedisStorage) GetMedia(userID int64, mediaGroupID string) (*MediaData, bool) {
+func (r *RedisStorage) GetMedia(userID int64, mediaGroupID string) (*media.MediaData, bool) {
 	ctx := context.Background()
 	key := mediaKey(userID, mediaGroupID)
 	data, err := r.client.Get(ctx, key).Bytes()
@@ -92,7 +91,11 @@ func (r *RedisStorage) GetMedia(userID int64, mediaGroupID string) (*MediaData, 
 	if err := json.Unmarshal(data, &md); err != nil {
 		return nil, false
 	}
-	out := &MediaData{files: md.Files, lastUpdate: md.LastUpdate}
+	var out *media.MediaData
+	for _, f := range md.Files {
+		out.AddFile(f)
+	}
+	out.Touch()
 	return out, true
 }
 

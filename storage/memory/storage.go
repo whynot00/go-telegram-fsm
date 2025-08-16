@@ -1,4 +1,4 @@
-package fsm
+package memory
 
 import (
 	"sync"
@@ -47,14 +47,14 @@ func (m *MemoryStorage) SetMedia(userID int64, mediaGroupID string, file media.F
 	mediaCache.mu.Lock()
 	defer mediaCache.mu.Unlock()
 
-	val, _ := mediaCache.data.LoadOrStore(mediaGroupID, &MediaData{})
-	md := val.(*MediaData)
-	md.addFile(file)
-	md.touch()
+	val, _ := mediaCache.data.LoadOrStore(mediaGroupID, &media.MediaData{})
+	md := val.(*media.MediaData)
+	md.AddFile(file)
+	md.Touch()
 }
 
 // GetMedia retrieves the MediaData for the given mediaGroupID and user.
-func (m *MemoryStorage) GetMedia(userID int64, mediaGroupID string) (*MediaData, bool) {
+func (m *MemoryStorage) GetMedia(userID int64, mediaGroupID string) (*media.MediaData, bool) {
 	userVal, ok := m.storage.Load(userID)
 	if !ok {
 		return nil, false
@@ -71,7 +71,7 @@ func (m *MemoryStorage) GetMedia(userID int64, mediaGroupID string) (*MediaData,
 	if !ok {
 		return nil, false
 	}
-	return val.(*MediaData), true
+	return val.(*media.MediaData), true
 }
 
 // CleanMediaCache removes media cache for the given user and group.

@@ -1,24 +1,24 @@
 package fsm
 
 import (
-	"github.com/whynot00/go-telegram-fsm/media"
+	"github.com/whynot00/go-telegram-fsm/storage"
+	"github.com/whynot00/go-telegram-fsm/storage/memory"
+	st_redis "github.com/whynot00/go-telegram-fsm/storage/redis"
 )
 
-// Storage defines the behaviour for caching user data and media.
-type Storage interface {
-	Set(userID int64, key string, value any)
-	Get(userID int64, key string) (any, bool)
-	SetMedia(userID int64, mediaGroupID string, file media.File)
-	GetMedia(userID int64, mediaGroupID string) (*MediaData, bool)
-	CleanMediaCache(userID int64, mediaGroupID string) bool
-	CleanCache(userID int64)
+func NewRedisStorage(addr, username, password string, db int) storage.Storage {
+	return st_redis.NewRedisStorage(addr, username, password, db)
+}
+
+func NewMemoryStorage() storage.Storage {
+	return memory.NewMemoryStorage()
 }
 
 // Option configures the FSM instance.
 type Option func(*FSM)
 
 // WithStorage sets a custom Storage implementation.
-func WithStorage(s Storage) Option {
+func WithStorage(s storage.Storage) Option {
 	return func(f *FSM) {
 		f.storage = s
 	}
