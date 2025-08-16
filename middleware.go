@@ -13,9 +13,10 @@ func Middleware(fsm *FSM) bot.Middleware {
 		return func(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 			if update != nil {
+				ctx = UserWithContext(ctx, extractUserID(update))
 
 				// Access current state to update last usage timestamp (optional)
-				fsm.CurrentState(extractUserID(update))
+				fsm.CurrentState(ctx)
 			}
 
 			// Store FSM in context for downstream handlers
@@ -30,9 +31,9 @@ func Middleware(fsm *FSM) bot.Middleware {
 func WithStates(states ...StateFSM) bot.Middleware {
 	return func(next bot.HandlerFunc) bot.HandlerFunc {
 		return func(ctx context.Context, b *bot.Bot, update *models.Update) {
-			fsm := FromContext(ctx)
-			userID := update.Message.From.ID
-			currentState := fsm.CurrentState(userID)
+			fsm := FSMFromContext(ctx)
+
+			currentState := fsm.CurrentState(ctx)
 
 			for _, state := range states {
 				if state == StateAny || state == currentState {

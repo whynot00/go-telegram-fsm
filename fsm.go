@@ -4,12 +4,17 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/whynot00/go-telegram-fsm/storage"
 )
 
 // FSM implements a finite state machine for users, maintaining states and local cache.
 type FSM struct {
-	current      sync.Map // current state and last usage time keyed by user ID.
-	localStorage sync.Map // user-specific cached data keyed by user ID.
+	current sync.Map        // current state and last usage time keyed by user ID.
+	storage storage.Storage // pluggable storage backend.
+
+	ttl             time.Duration
+	cleanupInterval time.Duration
 }
 
 // stateData holds the FSM state and the timestamp of last update.
@@ -20,14 +25,22 @@ type stateData struct {
 
 // New creates a new FSM instance and starts a background worker
 // to periodically clean up expired states.
-func New(ctx context.Context) *FSM {
+// Storage backend can be customised via options.
+func New(ctx context.Context, opts ...Option) *FSM {
 	fsm := &FSM{
-		current:      sync.Map{},
-		localStorage: sync.Map{},
+		current: sync.Map{},
+		storage: NewMemoryStorage(),
+
+		ttl:             30 * time.Minute,
+		cleanupInterval: 30 * time.Second,
+	}
+
+	for _, opt := range opts {
+		opt(fsm)
 	}
 
 	// Start a goroutine for periodic cleanup of inactive states
-	go fsm.startCleanupWorker(ctx, 30*time.Minute)
+	go fsm.startCleanupWorker(ctx)
 
 	return fsm
 }
