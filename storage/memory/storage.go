@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"sync"
 
 	"github.com/whynot00/go-telegram-fsm/media"
@@ -23,13 +24,13 @@ func NewMemoryStorage() *MemoryStorage {
 }
 
 // Set stores a key-value pair in the user's local cache.
-func (m *MemoryStorage) Set(userID int64, key string, value any) {
+func (m *MemoryStorage) Set(ctx context.Context, userID int64, key string, value any) {
 	cache, _ := m.storage.LoadOrStore(userID, &cacheData{})
 	cache.(*cacheData).data.Store(key, value)
 }
 
 // Get retrieves a value by key from the user's local cache.
-func (m *MemoryStorage) Get(userID int64, key string) (any, bool) {
+func (m *MemoryStorage) Get(ctx context.Context, userID int64, key string) (any, bool) {
 	if cache, ok := m.storage.Load(userID); ok {
 		return cache.(*cacheData).data.Load(key)
 	}
@@ -37,7 +38,7 @@ func (m *MemoryStorage) Get(userID int64, key string) (any, bool) {
 }
 
 // SetMedia adds a file to the specified mediaGroupID for a given user.
-func (m *MemoryStorage) SetMedia(userID int64, mediaGroupID string, file media.File) {
+func (m *MemoryStorage) SetMedia(ctx context.Context, userID int64, mediaGroupID string, file media.File) {
 	userVal, _ := m.storage.LoadOrStore(userID, &cacheData{})
 	userCache := userVal.(*cacheData)
 
@@ -54,7 +55,7 @@ func (m *MemoryStorage) SetMedia(userID int64, mediaGroupID string, file media.F
 }
 
 // GetMedia retrieves the MediaData for the given mediaGroupID and user.
-func (m *MemoryStorage) GetMedia(userID int64, mediaGroupID string) (*media.MediaData, bool) {
+func (m *MemoryStorage) GetMedia(ctx context.Context, userID int64, mediaGroupID string) (*media.MediaData, bool) {
 	userVal, ok := m.storage.Load(userID)
 	if !ok {
 		return nil, false
@@ -75,7 +76,7 @@ func (m *MemoryStorage) GetMedia(userID int64, mediaGroupID string) (*media.Medi
 }
 
 // CleanMediaCache removes media cache for the given user and group.
-func (m *MemoryStorage) CleanMediaCache(userID int64, mediaGroupID string) bool {
+func (m *MemoryStorage) CleanMediaCache(ctx context.Context, userID int64, mediaGroupID string) bool {
 	userVal, ok := m.storage.Load(userID)
 	if !ok {
 		return false
@@ -101,6 +102,6 @@ func (m *MemoryStorage) CleanMediaCache(userID int64, mediaGroupID string) bool 
 }
 
 // CleanCache removes all cached data for the given user.
-func (m *MemoryStorage) CleanCache(userID int64) {
+func (m *MemoryStorage) CleanCache(ctx context.Context, userID int64) {
 	m.storage.Delete(userID)
 }

@@ -33,17 +33,17 @@ func mediaKey(userID int64, group string) string {
 }
 
 // Set stores a key-value pair in Redis.
-func (r *RedisStorage) Set(userID int64, key string, value any) {
+func (r *RedisStorage) Set(ctx context.Context, userID int64, key string, value any) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(value); err != nil {
 		return
 	}
-	r.client.Set(context.Background(), userKey(userID, key), buf.Bytes(), 0)
+	r.client.Set(ctx, userKey(userID, key), buf.Bytes(), 0)
 }
 
 // Get retrieves a value from Redis.
-func (r *RedisStorage) Get(userID int64, key string) (any, bool) {
-	data, err := r.client.Get(context.Background(), userKey(userID, key)).Bytes()
+func (r *RedisStorage) Get(ctx context.Context, userID int64, key string) (any, bool) {
+	data, err := r.client.Get(ctx, userKey(userID, key)).Bytes()
 	if err != nil {
 		return nil, false
 	}
@@ -63,8 +63,8 @@ type redisMedia struct {
 }
 
 // SetMedia appends a file to a media group in Redis.
-func (r *RedisStorage) SetMedia(userID int64, mediaGroupID string, file media.File) {
-	ctx := context.Background()
+func (r *RedisStorage) SetMedia(ctx context.Context, userID int64, mediaGroupID string, file media.File) {
+
 	key := mediaKey(userID, mediaGroupID)
 	var md redisMedia
 	if data, err := r.client.Get(ctx, key).Bytes(); err == nil {
@@ -80,8 +80,8 @@ func (r *RedisStorage) SetMedia(userID int64, mediaGroupID string, file media.Fi
 }
 
 // GetMedia retrieves media data from Redis.
-func (r *RedisStorage) GetMedia(userID int64, mediaGroupID string) (*media.MediaData, bool) {
-	ctx := context.Background()
+func (r *RedisStorage) GetMedia(ctx context.Context, userID int64, mediaGroupID string) (*media.MediaData, bool) {
+
 	key := mediaKey(userID, mediaGroupID)
 	data, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
@@ -100,16 +100,16 @@ func (r *RedisStorage) GetMedia(userID int64, mediaGroupID string) (*media.Media
 }
 
 // CleanMediaCache removes media group data from Redis.
-func (r *RedisStorage) CleanMediaCache(userID int64, mediaGroupID string) bool {
-	ctx := context.Background()
+func (r *RedisStorage) CleanMediaCache(ctx context.Context, userID int64, mediaGroupID string) bool {
+
 	key := mediaKey(userID, mediaGroupID)
 	res, err := r.client.Del(ctx, key).Result()
 	return err == nil && res > 0
 }
 
 // CleanCache removes all cached data for the given user.
-func (r *RedisStorage) CleanCache(userID int64) {
-	ctx := context.Background()
+func (r *RedisStorage) CleanCache(ctx context.Context, userID int64) {
+
 	pattern := fmt.Sprintf("user:%d:*", userID)
 	keys, err := r.client.Keys(ctx, pattern).Result()
 	if err != nil {
