@@ -19,8 +19,8 @@ type FSM struct {
 
 // stateData holds the FSM state and the timestamp of last update.
 type stateData struct {
-	state   StateFSM  // current FSM state
-	lastUse time.Time // last update time of the state
+	state   StateFSM  // state is the current FSM state.
+	lastUse time.Time // lastUse records when the state was last updated.
 }
 
 // New creates a new FSM instance and starts a background worker
