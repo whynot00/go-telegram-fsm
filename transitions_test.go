@@ -22,22 +22,17 @@ func TestFSM_Transition_StateDefault_CleansCache(t *testing.T) {
 	f := fsm.New(context.Background())
 	userID := int64(100)
 
-	// Заносим в localStorage произвольные данные
 	f.Set(userID, "key1", "value1")
 
-	// Проверяем, что данные есть
 	val, ok := f.Get(userID, "key1")
 	require.True(t, ok)
 	require.Equal(t, "value1", val)
 
-	// Устанавливаем состояние StateDefault — кэш должен очиститься
 	f.Transition(userID, fsm.StateDefault)
 
-	// Проверяем, что кэш удалён
 	_, ok = f.Get(userID, "key1")
 	require.False(t, ok)
 
-	// Проверяем состояние
 	state := f.CurrentState(userID)
 	require.Equal(t, fsm.StateDefault, state)
 }

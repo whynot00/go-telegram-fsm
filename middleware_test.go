@@ -37,7 +37,7 @@ func TestWithStates_MatchingState(t *testing.T) {
 	f := fsm.New(context.Background())
 	userID := int64(1)
 
-	f.Transition(userID, "state1") // <- именно так меняется текущее состояние FSM
+	f.Transition(userID, "state1")
 
 	ctx := fsm.WithContext(context.Background(), f)
 
