@@ -27,8 +27,8 @@ func (f *FSM) Get(userID int64, key string) (any, bool) {
 	return nil, false
 }
 
-// SetMedia adds a fileID to the specified mediaGroupID for a given user.
-// Creates nested structures in localStorage if they don't exist yet.
+// SetMedia adds a file to the specified mediaGroupID for a given user.
+// It creates nested structures in localStorage if they don't exist yet.
 func (f *FSM) SetMedia(userID int64, mediaGroupID string, file media.File) {
 	userVal, _ := f.localStorage.LoadOrStore(userID, &cacheData{})
 	userCache := userVal.(*cacheData)
@@ -43,7 +43,8 @@ func (f *FSM) SetMedia(userID int64, mediaGroupID string, file media.File) {
 	md := val.(*MediaData)
 	md.addFile(file)
 	md.touch()
-	// mediaCache.data.Store(mediaGroupID, md) // не обязательно, md — тот же указатель
+
+	// No need to store md again; mediaCache.data already holds it.
 }
 
 // GetMedia retrieves the MediaData for the given mediaGroupID and user.
@@ -68,6 +69,7 @@ func (f *FSM) GetMedia(userID int64, mediaGroupID string) (*MediaData, bool) {
 	return val.(*MediaData), true
 }
 
+// CleanMediaCache removes media cache for the given user and group, returning true if data was removed.
 func (f *FSM) CleanMediaCache(userID int64, mediaGroupID string) bool {
 	userVal, ok := f.localStorage.Load(userID)
 	if !ok {

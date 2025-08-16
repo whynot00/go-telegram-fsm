@@ -26,8 +26,7 @@ func Middleware(fsm *FSM) bot.Middleware {
 	}
 }
 
-// WithStates returns a middleware that allows the handler
-// to run only if the user's current FSM state matches one of the specified states.
+// WithStates returns a middleware that allows the handler to run only if the user's current FSM state matches one of the specified states.
 func WithStates(states ...StateFSM) bot.Middleware {
 	return func(next bot.HandlerFunc) bot.HandlerFunc {
 		return func(ctx context.Context, b *bot.Bot, update *models.Update) {
@@ -42,11 +41,12 @@ func WithStates(states ...StateFSM) bot.Middleware {
 				}
 			}
 
-			// If no matching state found, handler is skipped
+			// If no matching state is found, the handler is skipped.
 		}
 	}
 }
 
+// extractUserID returns the ID of the user associated with the update.
 func extractUserID(u *models.Update) int64 {
 
 	switch {
@@ -71,7 +71,7 @@ func extractUserID(u *models.Update) int64 {
 	case u.PurchasedPaidMedia != nil:
 		return u.PurchasedPaidMedia.From.ID
 	case u.ChatMember != nil:
-		return u.ChatMember.From.ID // актер (кто изменил статус)
+		return u.ChatMember.From.ID
 	case u.MyChatMember != nil:
 		return u.MyChatMember.From.ID
 	case u.ChatJoinRequest != nil:

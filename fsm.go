@@ -8,14 +8,14 @@ import (
 
 // FSM implements a finite state machine for users, maintaining states and local cache.
 type FSM struct {
-	current      sync.Map // map[userID]stateData holding current state and last usage time
-	localStorage sync.Map // map[userID]cacheData storing user-specific cached data
+	current      sync.Map // current state and last usage time keyed by user ID.
+	localStorage sync.Map // user-specific cached data keyed by user ID.
 }
 
 // stateData holds the FSM state and the timestamp of last update.
 type stateData struct {
-	state   StateFSM  // current FSM state
-	lastUse time.Time // last update time of the state
+	state   StateFSM  // state is the current FSM state.
+	lastUse time.Time // lastUse records when the state was last updated.
 }
 
 // New creates a new FSM instance and starts a background worker

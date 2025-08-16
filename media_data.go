@@ -7,9 +7,7 @@ import (
 	"github.com/whynot00/go-telegram-fsm/media"
 )
 
-// MediaData stores information about a specific media group.
-// FileIDs    – a list of file identifiers belonging to this group.
-// LastUpdate – the timestamp of the last modification to this group.
+// MediaData stores files belonging to a specific media group and records the time of the last update.
 type MediaData struct {
 	mu         sync.RWMutex
 	files      []media.File
