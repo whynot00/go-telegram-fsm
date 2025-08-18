@@ -2,9 +2,16 @@ package fsm
 
 import (
 	"context"
+	"time"
 
 	"github.com/whynot00/go-telegram-fsm/media"
+	"github.com/whynot00/go-telegram-fsm/storage"
+	"github.com/whynot00/go-telegram-fsm/storage/memory"
 )
+
+func NewMemoryStorage(ttl, interval time.Duration) storage.Storage {
+	return memory.NewMemoryStorage(ttl, interval)
+}
 
 // Set stores a key-value pair for the user using configured storage.
 func (f *FSM) Set(ctx context.Context, userID int64, key string, value any) {

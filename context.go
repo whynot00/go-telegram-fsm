@@ -4,36 +4,42 @@ import (
 	"context"
 )
 
-// ctxKey defines a custom type for context keys to avoid collisions.
+// ctxKey is a private type used to define context keys uniquely.
+// This prevents collisions with keys from other packages.
 type ctxKey int
 
 const (
-	// FsmKey is the key used to store/retrieve FSM instance in context.
+	// FsmKey is the context key for storing/retrieving the FSM instance.
 	FsmKey ctxKey = iota
+
+	// UserKey is the context key for storing/retrieving the user ID.
 	UserKey
 )
 
-// WithContext returns a new context with the FSM instance stored.
-func FSMWithContext(ctx context.Context, f *FSM) context.Context {
-	return context.WithValue(ctx, FsmKey, f)
-}
-
-// FromContext retrieves the FSM instance from context if present, otherwise returns nil.
-func FSMFromContext(ctx context.Context) *FSM {
+// FromContext extracts the FSM instance from the context.
+// Returns nil if no FSM is present.
+func FromContext(ctx context.Context) *FSM {
 	if fsm, ok := ctx.Value(FsmKey).(*FSM); ok {
 		return fsm
 	}
 	return nil
 }
 
-func UserWithContext(ctx context.Context, userID int64) context.Context {
+// fsmWithContext returns a new context with the FSM instance attached.
+func fsmWithContext(ctx context.Context, f *FSM) context.Context {
+	return context.WithValue(ctx, FsmKey, f)
+}
+
+// userWithContext returns a new context with the user ID attached.
+func userWithContext(ctx context.Context, userID int64) context.Context {
 	return context.WithValue(ctx, UserKey, userID)
 }
 
-func UserFromContext(ctx context.Context) int64 {
+// userFromContext extracts the user ID from the context.
+// Returns 0 if no user ID is present.
+func userFromContext(ctx context.Context) int64 {
 	if user, ok := ctx.Value(UserKey).(int64); ok {
 		return user
 	}
-
-	return -1
+	return 0
 }

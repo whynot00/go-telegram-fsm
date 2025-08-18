@@ -14,4 +14,5 @@ type Storage interface {
 	GetMedia(ctx context.Context, userID int64, mediaGroupID string) (*media.MediaData, bool)
 	CleanMediaCache(ctx context.Context, userID int64, mediaGroupID string) bool
 	CleanCache(ctx context.Context, userID int64)
+	Close()
 }

@@ -10,8 +10,10 @@ import (
 
 // FSM implements a finite state machine for users, maintaining states and local cache.
 type FSM struct {
-	current sync.Map        // current state and last usage time keyed by user ID.
-	storage storage.Storage // pluggable storage backend.
+	current sync.Map // current state and last usage time keyed by user ID.
+
+	storage     storage.Storage // pluggable storage backend.
+	ownsStorage bool
 
 	ttl             time.Duration
 	cleanupInterval time.Duration
@@ -27,9 +29,10 @@ type stateData struct {
 // to periodically clean up expired states.
 // Storage backend can be customised via options.
 func New(ctx context.Context, opts ...Option) *FSM {
+
 	fsm := &FSM{
-		current: sync.Map{},
-		storage: NewMemoryStorage(),
+		current:     sync.Map{},
+		ownsStorage: true,
 
 		ttl:             30 * time.Minute,
 		cleanupInterval: 30 * time.Second,
@@ -39,8 +42,9 @@ func New(ctx context.Context, opts ...Option) *FSM {
 		opt(fsm)
 	}
 
-	// Start a goroutine for periodic cleanup of inactive states
-	go fsm.startCleanupWorker(ctx)
+	if fsm.ownsStorage {
+		fsm.storage = NewMemoryStorage(fsm.ttl, fsm.cleanupInterval)
+	}
 
 	return fsm
 }
