@@ -13,6 +13,11 @@ type MediaData struct {
 }
 
 // Files returns a copy of the stored files to preserve encapsulation.
+//
+// TODO: This operation is expensive — it allocates and copies the entire slice
+// every time. For large collections or under heavy concurrency this will become
+// a bottleneck. Consider optimizing (e.g. caching, limiting size, or returning
+// a read-only view) if this method is ever used in performance-critical code.
 func (md *MediaData) Files() []File {
 	md.mu.RLock()
 	defer md.mu.RUnlock()

@@ -2,54 +2,72 @@ package fsm
 
 import (
 	"context"
+	"slices"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
 
-// Middleware injects the FSM instance into the context for each update.
+// Middleware attaches the FSM instance and user ID (if present)
+// to the context for every incoming update.
+// User state is created lazily only if a valid user ID (>0) is extracted.
 func Middleware(fsm *FSM) bot.Middleware {
 	return func(next bot.HandlerFunc) bot.HandlerFunc {
 		return func(ctx context.Context, b *bot.Bot, update *models.Update) {
-
 			if update != nil {
-				ctx = UserWithContext(ctx, extractUserID(update))
-
-				// Access current state to update last usage timestamp (optional)
-				fsm.CurrentState(ctx)
+				uid := extractUserID(update)
+				if uid > 0 {
+					ctx = userWithContext(ctx, uid)
+					fsm.Create(ctx)
+				}
 			}
 
-			// Store FSM in context for downstream handlers
-			ctx = context.WithValue(ctx, FsmKey, fsm)
+			// Inject FSM instance into context for downstream handlers.
+			ctx = fsmWithContext(ctx, fsm)
 
 			next(ctx, b, update)
 		}
 	}
 }
 
-// WithStates returns a middleware that allows the handler to run only if the user's current FSM state matches one of the specified states.
+// WithStates restricts handler execution to specific FSM states.
+// - If no states are provided → handler is always executed.
+// - If StateAny is provided → handler is always executed.
+// - Otherwise → handler runs only when the current state matches one of the provided states.
+// If no FSM or state is found, the handler is skipped.
 func WithStates(states ...StateFSM) bot.Middleware {
 	return func(next bot.HandlerFunc) bot.HandlerFunc {
 		return func(ctx context.Context, b *bot.Bot, update *models.Update) {
-			fsm := FSMFromContext(ctx)
-
-			currentState := fsm.CurrentState(ctx)
-
-			for _, state := range states {
-				if state == StateAny || state == currentState {
-					next(ctx, b, update)
-					return
-				}
+			if len(states) == 0 {
+				next(ctx, b, update)
+				return
 			}
 
-			// If no matching state is found, the handler is skipped.
+			if slices.Contains(states, StateAny) {
+				next(ctx, b, update)
+				return
+			}
+
+			fsm := FromContext(ctx)
+			if fsm == nil {
+				return // no FSM → skip handler
+			}
+
+			currentState, ok := fsm.CurrentState(ctx)
+			if !ok {
+				return // no state → skip handler
+			}
+
+			if slices.Contains(states, currentState) {
+				next(ctx, b, update)
+			}
 		}
 	}
 }
 
-// extractUserID returns the ID of the user associated with the update.
+// extractUserID extracts the user ID from an incoming update.
+// Returns 0 if no valid user is present in the update.
 func extractUserID(u *models.Update) int64 {
-
 	switch {
 	case u.Message != nil && u.Message.From != nil:
 		return u.Message.From.ID
