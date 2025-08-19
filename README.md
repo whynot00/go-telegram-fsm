@@ -55,21 +55,24 @@ func main() {
     b, _ := bot.New("<TOKEN>", bot.WithMiddlewares(fsm.Middleware(machine)))
 
     // /start is allowed only in the default state and moves user to "ask-name".
-    b.RegisterHandler(bot.HandlerTypeMessageText, "/start",
-        fsm.WithStates(fsm.StateDefault),
-        func(ctx context.Context, b *bot.Bot, upd *models.Update) {
-            machine.Transition(ctx, "ask-name")
-            b.SendMessage(ctx, &bot.SendMessageParams{ChatID: upd.Message.Chat.ID, Text: "Hi! What is your name?"})
-        },
-    )
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/start", bot.MatchTypeCommand,
+		func(ctx context.Context, b *bot.Bot, upd *models.Update) {
+			machine := fsm.FromContext(ctx)
+
+			machine.Transition(ctx, "ask-name")
+			b.SendMessage(ctx, &bot.SendMessageParams{ChatID: upd.Message.Chat.ID, Text: "Hi! What is your name?"})
+		},
+		fsm.WithStates(fsm.StateDefault),
+	)
 
     // Handler for the next state
-    b.RegisterHandler(bot.HandlerTypeMessageText, "", fsm.WithStates("ask-name"),
+    b.RegisterHandler(bot.HandlerTypeMessageText, "", bot.MatchTypeExact,
         func(ctx context.Context, b *bot.Bot, upd *models.Update) {
             name := upd.Message.Text
             b.SendMessage(ctx, &bot.SendMessageParams{ChatID: upd.Message.Chat.ID, Text: "Nice to meet you, " + name})
             machine.Finish(ctx) // back to default, cache cleaned
         },
+        fsm.WithStates("ask-name"),
     )
 
     b.Start(ctx)
@@ -126,7 +129,7 @@ b, _ := bot.New(token, bot.WithMiddlewares(fsm.Middleware(f)))
 `fsm.WithStates` is an additional middleware that allows a handler to run only when a user's state matches one of the provided states:
 
 ```go
-b.RegisterHandler(bot.HandlerTypeMessageText, "", fsm.WithStates("step1", "step2"), handler)
+b.RegisterHandler(bot.HandlerTypeMessageText, "", handler, fsm.WithStates("step1", "step2"))
 ```
 
 Special rules:
